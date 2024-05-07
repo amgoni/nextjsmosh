@@ -1,20 +1,21 @@
 import { NextRequest } from "next/server";
 import { schema } from "../schema";
+import prisma from "@/prisma/client";
 
 interface Props {
-  params: { id: number };
+  params: { id: string };
 }
 
 // Getting a single user
-export function GET(request: NextRequest, { params }: Props) {
-  if (params.id > 10) {
+export async function GET(request: NextRequest, { params }: Props) {
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(params.id) },
+  });
+  if (!user) {
     return Response.json({ error: "Invalid ID" }, { status: 404 });
   }
 
-  return Response.json({
-    id: params.id,
-    name: "John Doe",
-  });
+  return Response.json(user, { status: 200 });
 }
 
 // Updating a user
@@ -27,24 +28,39 @@ export async function PUT(request: NextRequest, { params }: Props) {
     return Response.json(validation.error.errors, { status: 400 });
   }
 
-  if (params.id > 10) {
+  // Find if user exists
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(params.id) },
+  });
+
+  if (!user) {
     return Response.json({ error: "Invalid ID" }, { status: 404 });
   }
 
-  return Response.json(
-    {
-      id: params.id,
+  const updatedUser = prisma.user.update({
+    where: { id: parseInt(params.id) },
+    data: {
       name: body.name,
+      email: body.email,
     },
-    { status: 200 }
-  );
+  });
+
+  return Response.json(updatedUser, { status: 200 });
 }
 
 // Deleting a user
 export async function DELETE(request: NextRequest, { params }: Props) {
-  if (params.id > 10) {
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(params.id) },
+  });
+
+  if (!user) {
     return Response.json({ error: "Invalid ID" }, { status: 404 });
   }
 
-  return Response.json({ id: params.id }, { status: 200 });
+  await prisma.user.delete({
+    where: { id: parseInt(params.id) },
+  });
+
+  return Response.json({});
 }
