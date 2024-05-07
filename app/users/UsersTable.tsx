@@ -1,6 +1,5 @@
-"use client";
 import React from "react";
-import { useState, useEffect } from "react";
+import Link from "next/link";
 import { sort } from "fast-sort";
 
 interface User {
@@ -9,48 +8,33 @@ interface User {
   email: string;
 }
 
-const UsersTable = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [sortAsc, setSortAsc] = useState(true);
-  const [sortDesc, setSortDesc] = useState(false);
+interface Props {
+  sortOrder: string;
+}
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const res = await fetch("https://jsonplaceholder.typicode.com/users");
+const UsersTable = async ({ sortOrder }: Props) => {
+  const res = await fetch("https://jsonplaceholder.typicode.com/users");
 
-      const fetchedUsers: User[] = await res.json();
-      const sortFetchedUsers = sort(fetchedUsers).asc((user) => user.name);
+  const users: User[] = await res.json();
 
-      setUsers(sortFetchedUsers);
-    };
-
-    fetchUsers();
-  }, []);
-
-  const sortUsersHandler = () => {
-    if (sortAsc) {
-      const sortUsers = sort(users).desc((user) => user.name);
-      setUsers(sortUsers);
-      setSortAsc(false);
-      setSortDesc(true);
-    } else if (sortDesc) {
-      const sortUsers = sort(users).asc((user) => user.name);
-      setUsers(sortUsers);
-      setSortAsc(true);
-      setSortDesc(false);
-    }
-  };
+  const sortedUsers = sort(users).asc(
+    sortOrder === "email" ? (user) => user.email : (user) => user.name
+  );
 
   return (
     <table className="table table-bordered">
       <thead>
         <tr>
-          <th onClick={sortUsersHandler}>Name</th>
-          <th>Email</th>
+          <th>
+            <Link href="/users?sortOrder=name">Name</Link>
+          </th>
+          <th>
+            <Link href="/users?sortOrder=email">Email</Link>
+          </th>
         </tr>
       </thead>
       <tbody>
-        {users.map((user) => (
+        {sortedUsers.map((user) => (
           <tr key={user.id}>
             <td>{user.name}</td>
             <td>{user.email}</td>
